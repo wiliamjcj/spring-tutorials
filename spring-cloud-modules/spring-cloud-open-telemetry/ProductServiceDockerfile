@@ -1,0 +1,20 @@
+#FROM adoptopenjdk/openjdk11:alpine
+
+# Use Maven image as the build environment
+FROM maven:3.8.3-openjdk-11 AS build
+WORKDIR /app
+
+# Copy the entire source and build the application
+COPY . .
+RUN mvn -f spring-cloud-open-telemetry1/pom.xml package
+
+# Final image with JRE to run the application
+FROM openjdk:11-jre-slim
+WORKDIR /app
+COPY --from=build /app/target/spring-cloud-open-telemetry1-1.0.0-SNAPSHOT.jar spring-cloud-open-telemetry.jar
+
+#COPY target/spring-cloud-open-telemetry1-1.0.0-SNAPSHOT.jar spring-cloud-open-telemetry.jar
+
+EXPOSE 8080
+
+ENTRYPOINT ["java","-jar","/spring-cloud-open-telemetry.jar"]

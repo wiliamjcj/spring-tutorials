@@ -1,17 +1,19 @@
-version: "4.0"
-
 services:
   product-service:
     platform: linux/x86_64
     build: spring-cloud-open-telemetry1/
     ports:
       - "8080:8080"
+    volumes:
+      - ./logs:/logs
 
   price-service:
     platform: linux/x86_64
     build: spring-cloud-open-telemetry2/
     ports:
       - "8081"
+    volumes:
+      - ./logs:/logs
 
   jaeger-service:
     image: jaegertracing/all-in-one:latest
