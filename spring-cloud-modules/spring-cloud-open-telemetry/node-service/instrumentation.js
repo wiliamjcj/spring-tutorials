@@ -14,10 +14,10 @@ const opentelemetry = require("@opentelemetry/sdk-node");
 const {
     getNodeAutoInstrumentations,
 } = require("@opentelemetry/auto-instrumentations-node");
-
+const { WinstonInstrumentation } = require('@opentelemetry/instrumentation-winston');
 
 const exporter = new OTLPTraceExporter({
-    url: "http://localhost:4318/v1/traces"
+    url: "http://172.19.0.5:4317/v1/traces"
 });
 
 const provider = new BasicTracerProvider({
@@ -27,22 +27,19 @@ const provider = new BasicTracerProvider({
     }),
 });
 // export spans to console (useful for debugging)
-provider.addSpanProcessor(new SimpleSpanProcessor(new ConsoleSpanExporter()));
+//provider.addSpanProcessor(new SimpleSpanProcessor(new ConsoleSpanExporter()));
 // export spans to opentelemetry collector
 provider.addSpanProcessor(new SimpleSpanProcessor(exporter));
 
 provider.register();
+
+
 const sdk = new opentelemetry.NodeSDK({
     traceExporter: exporter,
-    instrumentations: [getNodeAutoInstrumentations()],
+    instrumentations: [getNodeAutoInstrumentations(), new WinstonInstrumentation()],
 });
 
-sdk
-    .start()
-    .then(() => {
-        console.log("Tracing initialized");
-    })
-    .catch((error) => console.log("Error initializing tracing", error));
+sdk.start()
 
 process.on("SIGTERM", () => {
     sdk
@@ -51,3 +48,10 @@ process.on("SIGTERM", () => {
         .catch((error) => console.log("Error terminating tracing", error))
         .finally(() => process.exit(0));
 });
+
+const winston = require('winston');
+const logger = winston.createLogger({
+  transports: [new winston.transports.Console(),new (winston.transports.File) ({filename: '../logs/node-service.log'})],
+})
+
+module.exports = logger
